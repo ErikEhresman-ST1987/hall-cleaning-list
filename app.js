@@ -133,7 +133,6 @@
   const progressFill = document.querySelector("#progress-fill");
   const sectionsContainer = document.querySelector("#checklist-sections");
   const resetButton = document.querySelector("#reset-checklist");
-  const choiceMessage = document.querySelector("#choice-message");
   const scheduleEntries = document.querySelector("#schedule-entries");
   const appearanceButton = document.querySelector("#appearance-button");
   const appearanceDialog = document.querySelector("#appearance-dialog");
