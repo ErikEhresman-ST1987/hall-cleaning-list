@@ -19,6 +19,55 @@
           { id: "am-report-supplies", text: "Report other supplies that are running low to the Cleaning Captain." }
         ]
       }]
+    },
+    deepCleaning: {
+      id: "deepCleaning",
+      title: "Deep Cleaning",
+      sections: [
+        {
+          id: "deep-main-hall",
+          title: "Main Hall",
+          tasks: [
+            { id: "dc-main-disinfect-counters", text: "Disinfect all counters." },
+            { id: "dc-main-clean-platform", text: "Dust/disinfect platform table, chairs, and lectern." },
+            { id: "dc-main-inspect-seats", text: "Inspect seats and clean as needed." },
+            { id: "dc-main-clean-armrests", text: "Clean armrests." },
+            { id: "dc-main-vacuum-carpets", text: "Thoroughly vacuum all carpets." },
+            { id: "dc-main-check-vacuums", text: "Check vacuums after use and empty as needed." },
+            { id: "dc-main-sweep-mop-tile", text: "Sweep and mop tile floors." }
+          ]
+        },
+        {
+          id: "deep-second-school",
+          title: "Second School",
+          tasks: [
+            { id: "dc-school-clean-window", text: "Clean front and back of Second School window." },
+            { id: "dc-school-dust-blinds", text: "Dust Second School blinds." }
+          ]
+        },
+        {
+          id: "deep-bathrooms",
+          title: "Bathrooms",
+          tasks: [
+            { id: "dc-bath-clean-mirrors", text: "Clean bathroom mirrors." },
+            { id: "dc-bath-clean-sinks", text: "Clean bathroom sinks." },
+            { id: "dc-bath-clean-toilets", text: "Clean toilets and urinals." },
+            { id: "dc-bath-clean-splash-guards", text: "Clean stainless-steel splash guards on doors and walls." },
+            { id: "dc-bath-inspect-other", text: "Inspect other bathroom areas and clean as needed." }
+          ]
+        },
+        {
+          id: "deep-cleaning-storage",
+          title: "Cleaning & Storage",
+          tasks: [
+            { id: "dc-storage-inspect", text: "Inspect storage areas and address any issues as needed." },
+            { id: "dc-storage-empty-trash", text: "Empty all trash receptacles and take trash home for disposal." },
+            { id: "dc-storage-wash-cloths", text: "Take all cloths and mop heads in the dirty bin home, wash them, and return them to the Hall." },
+            { id: "dc-storage-refill-bottles", text: "Refill red and green spray bottles as needed; contact Cleaning Captain for instructions if necessary." },
+            { id: "dc-storage-report-supplies", text: "Report other supplies that are running low to the Cleaning Captain." }
+          ]
+        }
+      ]
     }
   };
   const DEFAULT_STATE = Object.freeze({
@@ -61,6 +110,7 @@
   const tabs = Array.from(document.querySelectorAll("[data-view]"));
   const primaryViews = Array.from(document.querySelectorAll("#cleaning-view, #schedule-view"));
   const checklistView = document.querySelector("#checklist-view");
+  const guideView = document.querySelector("#guide-view");
   const checklistTitle = document.querySelector("#checklist-title");
   const checklistProgress = document.querySelector("#checklist-progress");
   const progressTrack = document.querySelector(".progress-track");
@@ -68,10 +118,12 @@
   const sectionsContainer = document.querySelector("#checklist-sections");
   const resetButton = document.querySelector("#reset-checklist");
   const choiceMessage = document.querySelector("#choice-message");
+  let guideReturn = { type: "primary", id: "cleaning" };
 
   function showPrimaryView(viewName) {
     activeChecklistId = null;
     checklistView.hidden = true;
+    guideView.hidden = true;
     tabs.forEach((tab) => {
       const active = tab.dataset.view === viewName;
       tab.classList.toggle("is-active", active);
@@ -100,6 +152,7 @@
     if (!checklist) return;
     activeChecklistId = checklistId;
     primaryViews.forEach((view) => { view.hidden = true; });
+    guideView.hidden = true;
     checklistView.hidden = false;
     checklistTitle.textContent = checklist.title;
     sectionsContainer.replaceChildren();
@@ -141,6 +194,14 @@
     document.querySelector("#back-to-cleaning").focus();
   }
 
+  function showGuide() {
+    guideReturn = activeChecklistId ? { type: "checklist", id: activeChecklistId } : { type: "primary", id: "cleaning" };
+    primaryViews.forEach((view) => { view.hidden = true; });
+    checklistView.hidden = true;
+    guideView.hidden = false;
+    document.querySelector("#back-from-guide").focus();
+  }
+
   tabs.forEach((tab, index) => {
     tab.addEventListener("click", () => showPrimaryView(tab.dataset.view));
     tab.addEventListener("keydown", (event) => {
@@ -153,7 +214,11 @@
     });
   });
   document.querySelector('[data-cleaning-type="after-meeting"]').addEventListener("click", () => renderChecklist("afterMeeting"));
-  document.querySelector('[data-cleaning-type="deep-cleaning"]').addEventListener("click", () => { choiceMessage.textContent = "Deep Cleaning will be added in the next development increment."; });
+  document.querySelector('[data-cleaning-type="deep-cleaning"]').addEventListener("click", () => renderChecklist("deepCleaning"));
+  document.querySelectorAll("[data-open-guide]").forEach((button) => button.addEventListener("click", showGuide));
+  document.querySelector("#back-from-guide").addEventListener("click", () => {
+    guideReturn.type === "checklist" ? renderChecklist(guideReturn.id) : showPrimaryView(guideReturn.id);
+  });
   document.querySelector("#back-to-cleaning").addEventListener("click", () => showPrimaryView("cleaning"));
   resetButton.addEventListener("click", () => {
     if (!activeChecklistId || !window.confirm("Reset every completed task in this checklist?")) return;

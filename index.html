@@ -29,6 +29,7 @@
   <main id="main-content" class="app-main" tabindex="-1">
     <section id="cleaning-view" class="view" role="tabpanel" aria-labelledby="cleaning-tab">
       <div class="intro"><p class="section-label">Choose a checklist</p><h2>What are you cleaning today?</h2><p>Select the cleaning assignment you are here to complete.</p></div>
+      <div class="supporting-row"><button class="guide-button" type="button" data-open-guide>Cleaning Guide</button></div>
       <div class="choice-list" aria-label="Cleaning choices">
         <button class="cleaning-choice" type="button" data-cleaning-type="after-meeting" aria-describedby="after-meeting-description">
           <span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M7 16.5 13 22l12-13"/></svg></span>
@@ -49,6 +50,7 @@
         <div><p class="section-label">Working checklist</p><h2 id="checklist-title"></h2></div>
         <p id="checklist-progress" class="progress-count" aria-live="polite"></p>
       </div>
+      <div class="supporting-row"><button class="guide-button" type="button" data-open-guide>Cleaning Guide</button></div>
       <div class="progress-track" role="progressbar" aria-labelledby="checklist-progress" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><span id="progress-fill"></span></div>
       <aside class="product-note" aria-label="Cleaning product reminder">
         <strong>Cleaning product reminder</strong>
@@ -57,6 +59,16 @@
       </aside>
       <div id="checklist-sections"></div>
       <button id="reset-checklist" class="reset-button" type="button">Reset Checklist</button>
+    </section>
+    <section id="guide-view" class="view" aria-labelledby="guide-title" hidden>
+      <button id="back-from-guide" class="back-button" type="button"><span aria-hidden="true">‹</span> Back</button>
+      <div class="intro"><p class="section-label">Reference</p><h2 id="guide-title">Cleaning Guide</h2><p>Keep these instructions in mind while completing either checklist.</p></div>
+      <div class="guide-list">
+        <section class="guide-card"><h3>Use the Correct Spray Bottle</h3><p><span class="bottle-label bottle-red">RED</span> spray bottles are for bathrooms only.</p><p><span class="bottle-label bottle-green">GREEN</span> spray bottles are for everything else.</p></section>
+        <section class="guide-card"><h3>Trash Disposal</h3><p>Take collected trash home for disposal. Do not leave filled trash bags at the Hall.</p></section>
+        <section class="guide-card"><h3>Cloths and Mop Heads</h3><p>During Deep Cleaning, take all cloths and mop heads from the dirty bin home, wash them, and return them to the Hall.</p></section>
+        <section class="guide-card"><h3>Supplies</h3><p>Contact the Cleaning Captain for spray-bottle refill instructions if necessary. Report other supplies that are running low.</p></section>
+      </div>
     </section>
     <section id="schedule-view" class="view" role="tabpanel" aria-labelledby="schedule-tab" hidden>
       <div class="intro"><p class="section-label">Upcoming assignments</p><h2>Cleaning Schedule</h2><p>Your next four cleaning assignments will appear here.</p></div>
