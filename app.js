@@ -2,6 +2,8 @@
   "use strict";
   const STORAGE_KEY = "hallCleaningState";
   const SCHEMA_VERSION = 1;
+  const VALID_THEMES = ["green", "blue", "orange", "dark"];
+  const THEME_COLORS = { green: "#2f6b4f", blue: "#356b9a", orange: "#984b1b", dark: "#1d4b35" };
   const CHECKLISTS = {
     afterMeeting: {
       id: "afterMeeting",
@@ -103,7 +105,7 @@
           deepCleaning: isStringArray(ids.deepCleaning) ? ids.deepCleaning : []
         },
         schedule: normalizeSchedule(stored.schedule),
-        theme: typeof stored.theme === "string" ? stored.theme : DEFAULT_STATE.theme
+        theme: VALID_THEMES.includes(stored.theme) ? stored.theme : DEFAULT_STATE.theme
       };
     } catch (error) {
       console.warn("Saved Hall Cleaning state could not be read. Defaults were restored.", error);
@@ -118,6 +120,8 @@
     catch (error) { console.warn("Hall Cleaning state could not be saved.", error); }
   }
   saveState();
+  document.documentElement.dataset.theme = state.theme;
+  document.querySelector('meta[name="theme-color"]').content = THEME_COLORS[state.theme];
 
   const tabs = Array.from(document.querySelectorAll("[data-view]"));
   const primaryViews = Array.from(document.querySelectorAll("#cleaning-view, #schedule-view"));
@@ -131,6 +135,9 @@
   const resetButton = document.querySelector("#reset-checklist");
   const choiceMessage = document.querySelector("#choice-message");
   const scheduleEntries = document.querySelector("#schedule-entries");
+  const appearanceButton = document.querySelector("#appearance-button");
+  const appearanceDialog = document.querySelector("#appearance-dialog");
+  const themeOptions = Array.from(document.querySelectorAll("[data-theme-choice]"));
   let guideReturn = { type: "primary", id: "cleaning" };
 
   function showPrimaryView(viewName) {
@@ -328,6 +335,19 @@
     });
   }
 
+  function updateThemeSelection() {
+    themeOptions.forEach((option) => option.setAttribute("aria-checked", String(option.dataset.themeChoice === state.theme)));
+  }
+
+  function applyTheme(theme) {
+    if (!VALID_THEMES.includes(theme)) return;
+    state.theme = theme;
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]').content = THEME_COLORS[theme];
+    updateThemeSelection();
+    saveState();
+  }
+
   tabs.forEach((tab, index) => {
     tab.addEventListener("click", () => showPrimaryView(tab.dataset.view));
     tab.addEventListener("keydown", (event) => {
@@ -346,12 +366,22 @@
     guideReturn.type === "checklist" ? renderChecklist(guideReturn.id) : showPrimaryView(guideReturn.id);
   });
   document.querySelector("#back-to-cleaning").addEventListener("click", () => showPrimaryView("cleaning"));
+  appearanceButton.addEventListener("click", () => {
+    updateThemeSelection();
+    appearanceDialog.showModal();
+  });
+  document.querySelector("#close-appearance").addEventListener("click", () => appearanceDialog.close());
+  themeOptions.forEach((option) => option.addEventListener("click", () => applyTheme(option.dataset.themeChoice)));
+  appearanceDialog.addEventListener("click", (event) => {
+    if (event.target === appearanceDialog) appearanceDialog.close();
+  });
   resetButton.addEventListener("click", () => {
     if (!activeChecklistId || !window.confirm("Reset every completed task in this checklist?")) return;
     state.completedTaskIds[activeChecklistId] = [];
     saveState();
     renderChecklist(activeChecklistId);
   });
+  updateThemeSelection();
   renderSchedule();
   if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js").catch((error) => console.warn("Offline support could not be started.", error)));
 })();

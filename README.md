@@ -4,7 +4,7 @@ Hall Cleaning is a lightweight, local-first checklist app for After Meeting Clea
 
 ## Project status
 
-Increment 4 adds four manually maintained Schedule entries with dates, cleaning types, optional notes, automatic saving, individual clearing, and chronological ordering. Appearance themes are intentionally reserved for a later approved increment.
+Increment 5 adds the approved Green, Blue, Orange, and Dark appearance themes. Theme selection applies immediately and persists locally without changing layout, wording, behavior, or the physical RED/GREEN cleaning-product meaning.
 
 ## Architecture
 
