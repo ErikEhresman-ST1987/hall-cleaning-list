@@ -78,6 +78,18 @@
   });
   const createDefaultState = () => JSON.parse(JSON.stringify(DEFAULT_STATE));
   const isStringArray = (value) => Array.isArray(value) && value.every((item) => typeof item === "string");
+  const createEmptyScheduleEntry = () => ({ date: "", cleaningType: "afterMeeting", note: "" });
+  function normalizeSchedule(schedule) {
+    if (!Array.isArray(schedule) || schedule.length !== 4) return Array.from({ length: 4 }, createEmptyScheduleEntry);
+    return schedule.map((entry) => {
+      if (!entry || typeof entry !== "object") return createEmptyScheduleEntry();
+      return {
+        date: typeof entry.date === "string" ? entry.date : "",
+        cleaningType: entry.cleaningType === "deepCleaning" ? "deepCleaning" : "afterMeeting",
+        note: typeof entry.note === "string" ? entry.note : ""
+      };
+    });
+  }
 
   function loadState() {
     try {
@@ -90,7 +102,7 @@
           afterMeeting: isStringArray(ids.afterMeeting) ? ids.afterMeeting : [],
           deepCleaning: isStringArray(ids.deepCleaning) ? ids.deepCleaning : []
         },
-        schedule: Array.isArray(stored.schedule) && stored.schedule.length === 4 ? stored.schedule : DEFAULT_STATE.schedule,
+        schedule: normalizeSchedule(stored.schedule),
         theme: typeof stored.theme === "string" ? stored.theme : DEFAULT_STATE.theme
       };
     } catch (error) {
@@ -118,6 +130,7 @@
   const sectionsContainer = document.querySelector("#checklist-sections");
   const resetButton = document.querySelector("#reset-checklist");
   const choiceMessage = document.querySelector("#choice-message");
+  const scheduleEntries = document.querySelector("#schedule-entries");
   let guideReturn = { type: "primary", id: "cleaning" };
 
   function showPrimaryView(viewName) {
@@ -131,6 +144,7 @@
       tab.tabIndex = active ? 0 : -1;
     });
     primaryViews.forEach((view) => { view.hidden = view.id !== `${viewName}-view`; });
+    if (viewName === "schedule") renderSchedule();
   }
 
   const getAllTasks = (checklist) => checklist.sections.flatMap((section) => section.tasks);
@@ -202,6 +216,118 @@
     document.querySelector("#back-from-guide").focus();
   }
 
+  function hasScheduleContent(entry) {
+    return Boolean(entry.date || entry.note.trim());
+  }
+
+  function sortSchedule() {
+    state.schedule.sort((a, b) => {
+      if (a.date && b.date) return a.date.localeCompare(b.date);
+      if (a.date) return -1;
+      if (b.date) return 1;
+      if (hasScheduleContent(a) && !hasScheduleContent(b)) return -1;
+      if (!hasScheduleContent(a) && hasScheduleContent(b)) return 1;
+      return 0;
+    });
+  }
+
+  function formatScheduleDate(value) {
+    if (!value) return "Open assignment";
+    const date = new Date(`${value}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return "Date needs correction";
+    return new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(date);
+  }
+
+  function cleaningTypeLabel(value) {
+    return value === "deepCleaning" ? "Deep Cleaning" : "After Meeting Clean";
+  }
+
+  function renderSchedule() {
+    sortSchedule();
+    scheduleEntries.replaceChildren();
+    state.schedule.forEach((entry, index) => {
+      const card = document.createElement("section");
+      card.className = "schedule-card";
+      const header = document.createElement("div");
+      header.className = "schedule-card-header";
+      const title = document.createElement("div");
+      title.className = "schedule-card-title";
+      const heading = document.createElement("h3");
+      heading.textContent = formatScheduleDate(entry.date);
+      const summary = document.createElement("p");
+      summary.textContent = hasScheduleContent(entry) ? cleaningTypeLabel(entry.cleaningType) : `Assignment slot ${index + 1}`;
+      title.append(heading, summary);
+      const clearButton = document.createElement("button");
+      clearButton.type = "button";
+      clearButton.className = "clear-schedule";
+      clearButton.textContent = "Clear";
+      clearButton.disabled = !hasScheduleContent(entry);
+      clearButton.setAttribute("aria-label", `Clear assignment slot ${index + 1}`);
+      clearButton.addEventListener("click", () => {
+        if (!window.confirm("Clear this cleaning assignment?")) return;
+        state.schedule[index] = createEmptyScheduleEntry();
+        sortSchedule();
+        saveState();
+        renderSchedule();
+      });
+      header.append(title, clearButton);
+
+      const fields = document.createElement("div");
+      fields.className = "schedule-fields";
+      const fieldDefinitions = [
+        { key: "date", label: "Date", type: "date" },
+        { key: "cleaningType", label: "Cleaning Type", type: "select" },
+        { key: "note", label: "Optional Note", type: "text" }
+      ];
+      fieldDefinitions.forEach((definition) => {
+        const field = document.createElement("div");
+        field.className = "field";
+        const label = document.createElement("label");
+        const inputId = `schedule-${index}-${definition.key}`;
+        label.htmlFor = inputId;
+        label.textContent = definition.label;
+        let control;
+        if (definition.type === "select") {
+          control = document.createElement("select");
+          [{ value: "afterMeeting", text: "After Meeting Clean" }, { value: "deepCleaning", text: "Deep Cleaning" }].forEach((optionData) => {
+            const option = document.createElement("option");
+            option.value = optionData.value;
+            option.textContent = optionData.text;
+            control.append(option);
+          });
+        } else {
+          control = document.createElement("input");
+          control.type = definition.type;
+          if (definition.key === "note") {
+            control.maxLength = 100;
+            control.placeholder = "Optional details";
+          }
+        }
+        control.id = inputId;
+        control.value = entry[definition.key];
+        const eventName = definition.key === "note" ? "input" : "change";
+        control.addEventListener(eventName, () => {
+          entry[definition.key] = control.value;
+          if (definition.key === "date") sortSchedule();
+          saveState();
+          if (definition.key !== "note") {
+            renderSchedule();
+          } else {
+            clearButton.disabled = !hasScheduleContent(entry);
+            summary.textContent = hasScheduleContent(entry) ? cleaningTypeLabel(entry.cleaningType) : `Assignment slot ${index + 1}`;
+          }
+        });
+        field.append(label, control);
+        fields.append(field);
+      });
+      const saveNote = document.createElement("p");
+      saveNote.className = "save-note";
+      saveNote.textContent = "Saved automatically on this device";
+      card.append(header, fields, saveNote);
+      scheduleEntries.append(card);
+    });
+  }
+
   tabs.forEach((tab, index) => {
     tab.addEventListener("click", () => showPrimaryView(tab.dataset.view));
     tab.addEventListener("keydown", (event) => {
@@ -226,5 +352,6 @@
     saveState();
     renderChecklist(activeChecklistId);
   });
+  renderSchedule();
   if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js").catch((error) => console.warn("Offline support could not be started.", error)));
 })();

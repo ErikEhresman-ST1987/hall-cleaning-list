@@ -4,7 +4,7 @@ Hall Cleaning is a lightweight, local-first checklist app for After Meeting Clea
 
 ## Project status
 
-Increment 3 completes both working checklists and adds the supporting Cleaning Guide. Each checklist has independent progress, automatic persistence, large touch targets, and confirmed reset. Schedule editing and appearance themes are intentionally reserved for later approved increments.
+Increment 4 adds four manually maintained Schedule entries with dates, cleaning types, optional notes, automatic saving, individual clearing, and chronological ordering. Appearance themes are intentionally reserved for a later approved increment.
 
 ## Architecture
 
